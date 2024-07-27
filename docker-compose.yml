@@ -1,0 +1,26 @@
+
+version: '3.7'
+
+services:
+      
+  radar-okx:
+    image: ${REGISTRY:-bidenradar}/okx:${TAG:-latest}
+    container_name: radar-okx
+    build:
+      context: .
+      dockerfile: Biden.Radar.OKX/Dockerfile
+    networks:
+      - bidenradar
+    
+  radar-bybit:
+    image: ${REGISTRY:-bidenradar}/bybit:${TAG:-latest}
+    container_name: radar-bybit
+    build:
+      context: .
+      dockerfile: Biden.Radar.Bybit/Dockerfile
+    networks:
+      - bidenradar
+            
+networks:
+  bidenradar:
+    name: bidenradar-network

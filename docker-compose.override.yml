@@ -1,0 +1,13 @@
+version: '3.7'
+
+services:  
+  
+  radar-okx:
+   restart: unless-stopped
+   environment:
+     - ASPNETCORE_ENVIRONMENT=Development
+     
+  radar-bybit:
+   restart: unless-stopped
+   environment:
+     - ASPNETCORE_ENVIRONMENT=Development
