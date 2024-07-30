@@ -203,14 +203,14 @@ namespace Biden.Radar.Bybit
                 var longElastic = longPercent == 0 ? 0 : (longPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / longPercent * 100;
                 var shortElastic = shortPercent == 0 ? 0 : (shortPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / shortPercent * 100;
                 var filterVol = candle.CandleType == CandleType.Margin ? 8000 : 5000;
-                if (candle.Volume > filterVol && longPercent < -0.8M && longElastic >= 40)
+                if (candle.Volume > filterVol && longPercent < -0.8M && longElastic >= 50)
                 {                    
                     var teleMessage = (candle.CandleType == CandleType.Margin ? "✅ " : "") + $"{symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     await _teleMessage.SendMessage(teleMessage);
                 }
-                if (candle.Volume > filterVol && shortPercent > 0.8M && shortElastic >= 40)
+                if (candle.Volume > filterVol && shortPercent > 0.8M && shortElastic >= 50 && candle.CandleType == CandleType.Margin)
                 {
-                    var teleMessage = (candle.CandleType == CandleType.Margin ? "✅ " : "") + $"{symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
+                    var teleMessage = $"✅ {symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     await _teleMessage.SendMessage(teleMessage);
                 }
             }
@@ -231,12 +231,12 @@ namespace Biden.Radar.Bybit
                 var shortPercent = (candle.High - candle.Open) / candle.Open * 100;
                 var longElastic = longPercent == 0 ? 0 : (longPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / longPercent * 100;
                 var shortElastic = shortPercent == 0 ? 0 : (shortPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / shortPercent * 100;
-                if (candle.Volume > 15000 && longPercent < -0.8M && longElastic >= 40)
+                if (candle.Volume > 15000 && longPercent < -0.8M && longElastic >= 50)
                 {
                     var teleMessage = $"💥 {symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     await _teleMessage.SendMessage(teleMessage);
                 }
-                if (candle.Volume > 15000 && shortPercent > 0.8M && shortElastic >= 40)
+                if (candle.Volume > 15000 && shortPercent > 0.8M && shortElastic >= 50)
                 {
                     var teleMessage = $"💥 {symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     await _teleMessage.SendMessage(teleMessage);
