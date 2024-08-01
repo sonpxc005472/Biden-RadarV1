@@ -225,12 +225,12 @@ namespace Biden.Radar.Gate
                 var shortPercent = (candle.High - candle.Open) / candle.Open * 100;
                 var longElastic = longPercent == 0 ? 0 : (longPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / longPercent * 100;
                 var shortElastic = shortPercent == 0 ? 0 : (shortPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / shortPercent * 100;
-                if (longPercent < -1.2M && longElastic >= 50)
+                if (longPercent < -1.2M && longElastic >= 60 && candle.Volume > 200)
                 {
                     var teleMessage = (candle.CandleType == CandleType.Margin ? "✅ " : "") + $"{symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     await _teleMessage.SendMessage(teleMessage);
                 }
-                if (shortPercent > 1.2M && shortElastic >= 50 && candle.CandleType == CandleType.Margin)
+                if (shortPercent > 1.2M && shortElastic >= 60 && candle.CandleType == CandleType.Margin && candle.Volume > 200)
                 {
                     var teleMessage = $"✅ {symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     await _teleMessage.SendMessage(teleMessage);
