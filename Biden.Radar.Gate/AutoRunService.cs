@@ -1,5 +1,6 @@
 ﻿using Biden.Radar.Common.Telegrams;
 using CryptoExchange.Net.CommonObjects;
+using CryptoExchange.Net.Interfaces;
 using Gate.IO.Api;
 using Gate.IO.Api.Enums;
 using Gate.IO.Api.Models.RestApi.Futures;
@@ -77,7 +78,9 @@ namespace Biden.Radar.Gate
         private static ConcurrentDictionary<string, Candle> _perpCandles = new ConcurrentDictionary<string, Candle>();
         private DateTime _startTimeSpot = DateTime.Now;
         private static List<string> _spotSymbols = new List<string>();
-
+        private static List<string> _marginSymbols = new List<string>();
+        private GateIoSocketClient _socketClient = new GateIoSocketClient();
+        private long preTimestamp = 0;
 
         private async Task RunRadar()
         {
@@ -85,7 +88,7 @@ namespace Biden.Radar.Gate
             var marginSymbols = await GetMarginTradingSymbols();
             var perpSymbols = await GetPerpTradingSymbols();
             _spotSymbols = spotSymbols.Select(s => s.Symbol).ToList();
-            var marginSymbolNames = marginSymbols.Select(s => s.Symbol).ToList();
+            _marginSymbols = marginSymbols.Select(s => s.Symbol).ToList();
             var perpSymbolNames = perpSymbols.Select(s => s.Contract).ToList();
 
             var spotBatches = _spotSymbols.Select((x, i) => new { Index = i, Value = x })
@@ -97,62 +100,12 @@ namespace Biden.Radar.Gate
                               .Select(x => x.Select(v => v.Value).ToList())
                               .ToList();
             
-            var socketClient = new GateIoSocketClient();
             
-            long preTimestamp = 0;
             _candle1s.Clear();
             _candles.Clear();
             foreach (var symbols in spotBatches)
             {
-                var subResult = await socketClient.SpotApi.SubscribeToTradeUpdatesAsync(symbols, async tradeData =>
-                {
-                    if (tradeData != null)
-                    {
-                        var symbol = tradeData.Data.Symbol;
-                        var symbolType = CandleType.Spot;
-                        if (marginSymbolNames.Contains(symbol))
-                        {
-                            symbolType = CandleType.Margin;
-                        }
-
-                        long converttimestamp = (long)(tradeData.Timestamp.ToUniversalTime() - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
-                        var timestamp = converttimestamp / 1000;
-                        var tick = new TickData
-                        {
-                            Timestamp = converttimestamp,
-                            Price = tradeData.Data.Price,
-                            Amount = tradeData.Data.Price * tradeData.Data.Quantity
-                        };
-                        _candles.AddOrUpdate(symbol,
-                                (ts) => new Candle // Tạo nến mới nếu chưa có
-                                {
-                                    Open = tick.Price,
-                                    High = tick.Price,
-                                    Low = tick.Price,
-                                    Close = tick.Price,
-                                    Volume = tick.Amount,
-                                    CandleType = symbolType
-                                },
-                                (ts, existingCandle) => // Cập nhật nến hiện tại
-                                {
-                                    existingCandle.High = Math.Max(existingCandle.High, tick.Price);
-                                    existingCandle.Low = Math.Min(existingCandle.Low, tick.Price);
-                                    existingCandle.Close = tick.Price;
-                                    existingCandle.Volume += tick.Amount;
-                                    existingCandle.CandleType = symbolType;
-                                    return existingCandle;
-                                });
-                        if (preTimestamp == 0)
-                        {
-                            preTimestamp = timestamp;
-                        }
-                        else if (timestamp > preTimestamp)
-                        {
-                            preTimestamp = timestamp;
-                            await ProcessBufferedData();
-                        }
-                    }
-                });
+                await SubscribeSymbols(symbols);
             }
 
             //_perpCandles.Clear();
@@ -207,6 +160,59 @@ namespace Biden.Radar.Gate
             //}
         }
 
+        private async Task SubscribeSymbols(List<string> symbols)
+        {
+            var subResult = await _socketClient.SpotApi.SubscribeToTradeUpdatesAsync(symbols, async tradeData =>
+            {
+                if (tradeData != null)
+                {
+                    var symbol = tradeData.Data.Symbol;
+                    var symbolType = CandleType.Spot;
+                    if (_marginSymbols.Contains(symbol))
+                    {
+                        symbolType = CandleType.Margin;
+                    }
+
+                    long converttimestamp = (long)(tradeData.Timestamp.ToUniversalTime() - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
+                    var timestamp = converttimestamp / 1000;
+                    var tick = new TickData
+                    {
+                        Timestamp = converttimestamp,
+                        Price = tradeData.Data.Price,
+                        Amount = tradeData.Data.Price * tradeData.Data.Quantity
+                    };
+                    _candles.AddOrUpdate(symbol,
+                            (ts) => new Candle // Tạo nến mới nếu chưa có
+                            {
+                                Open = tick.Price,
+                                High = tick.Price,
+                                Low = tick.Price,
+                                Close = tick.Price,
+                                Volume = tick.Amount,
+                                CandleType = symbolType
+                            },
+                            (ts, existingCandle) => // Cập nhật nến hiện tại
+                            {
+                                existingCandle.High = Math.Max(existingCandle.High, tick.Price);
+                                existingCandle.Low = Math.Min(existingCandle.Low, tick.Price);
+                                existingCandle.Close = tick.Price;
+                                existingCandle.Volume += tick.Amount;
+                                existingCandle.CandleType = symbolType;
+                                return existingCandle;
+                            });
+                    if (preTimestamp == 0)
+                    {
+                        preTimestamp = timestamp;
+                    }
+                    else if (timestamp > preTimestamp)
+                    {
+                        preTimestamp = timestamp;
+                        await ProcessBufferedData();
+                    }
+                }
+            });
+        }
+
         private async Task ProcessBufferedData()
         {
             // Copy the current buffer for processing and clear the original buffer
@@ -235,7 +241,7 @@ namespace Biden.Radar.Gate
             }
 
             var currentTime = DateTime.Now;
-            if ((currentTime - _startTimeSpot).TotalMinutes >= 2)
+            if ((currentTime - _startTimeSpot).TotalSeconds >= 2)
             {
                 _startTimeSpot = currentTime;
                 //5p get symbols again to check new listings
@@ -243,9 +249,12 @@ namespace Biden.Radar.Gate
                 if (currentSymbols.Count != _spotSymbols.Count)
                 {
                     var newTokensAdded = currentSymbols.Select(x => x.Symbol).Except(_spotSymbols).ToList();
-                    await _teleMessage.SendMessage($"NEW TOKEN ADDED: {string.Join(",", newTokensAdded)}");
-                    await Task.Delay(1000);
-                    Environment.Exit(0);
+                    if(newTokensAdded.Any())
+                    {
+                        _marginSymbols = (await GetMarginTradingSymbols()).Select(s => s.Symbol).ToList();
+                        await _teleMessage.SendMessage($"NEW TOKEN ADDED: {string.Join(",", newTokensAdded)}");
+                        await SubscribeSymbols(newTokensAdded);
+                    }
                 }
             }
         }
