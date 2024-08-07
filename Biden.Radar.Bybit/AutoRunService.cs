@@ -56,15 +56,18 @@ namespace Biden.Radar.Bybit
         private static ConcurrentDictionary<string, Candle> _spotCandles = new ConcurrentDictionary<string, Candle>();
         private static ConcurrentDictionary<string, Candle> _perpCandles = new ConcurrentDictionary<string, Candle>();
 
-
+        private DateTime _startTimeSpot = DateTime.Now;
+        private DateTime _startTimePerp = DateTime.Now;
+        private static List<string> _spotSymbols = new List<string>();
+        private static List<string> _perpSymbols = new List<string>();
         private async Task RunRadar()
         {
             var spotSymbols = await GetSpotTradingSymbols();
             var perpSymbols = await GetPerpTradingSymbols();
-            var spotSymbolNames = spotSymbols.Select(s => s.Name).ToList();
-            var perpSymbolNames = perpSymbols.Select(s => s.Name).ToList();
+            _spotSymbols = spotSymbols.Select(s => s.Name).ToList();
+            _perpSymbols = perpSymbols.Select(s => s.Name).ToList();
             
-            var batches = spotSymbolNames.Select((x, i) => new { Index = i, Value = x })
+            var batches = _spotSymbols.Select((x, i) => new { Index = i, Value = x })
                               .GroupBy(x => x.Index / 10)
                               .Select(x => x.Select(v => v.Value).ToList())
                               .ToList();
@@ -129,7 +132,7 @@ namespace Biden.Radar.Bybit
                 });
             }
 
-            batches = perpSymbolNames.Select((x, i) => new { Index = i, Value = x })
+            batches = _perpSymbols.Select((x, i) => new { Index = i, Value = x })
                               .GroupBy(x => x.Index / 10)
                               .Select(x => x.Select(v => v.Value).ToList())
                               .ToList();
@@ -203,18 +206,32 @@ namespace Biden.Radar.Bybit
                 var longElastic = longPercent == 0 ? 0 : (longPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / longPercent * 100;
                 var shortElastic = shortPercent == 0 ? 0 : (shortPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / shortPercent * 100;
                 var filterVol = candle.CandleType == CandleType.Margin ? 8000 : 5000;
-                if (candle.Volume > filterVol && longPercent < -0.8M && longElastic >= 50)
+                if (candle.Volume > filterVol && longPercent < -0.6M && longElastic >= 40)
                 {                    
                     var teleMessage = (candle.CandleType == CandleType.Margin ? "✅ " : "") + $"{symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     Console.WriteLine(teleMessage);
                     await _teleMessage.SendMessage(teleMessage);
                 }
-                if (candle.Volume > filterVol && shortPercent > 0.8M && shortElastic >= 50 && candle.CandleType == CandleType.Margin)
+                if (candle.Volume > filterVol && shortPercent > 0.6M && shortElastic >= 40 && candle.CandleType == CandleType.Margin)
                 {
                     var teleMessage = $"✅ {symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     Console.WriteLine(teleMessage);
                     await _teleMessage.SendMessage(teleMessage);
                 }
+            }
+            var currentTime = DateTime.Now;
+            if((currentTime -  _startTimeSpot).TotalMinutes >= 2)
+            {
+                _startTimeSpot = currentTime;
+                //5p get symbols again to check new listings
+                var currentSymbols = await GetSpotTradingSymbols();
+                if(currentSymbols.Count != _spotSymbols.Count)
+                {
+                    var newTokensAdded = currentSymbols.Select(x => x.Name).Except(_spotSymbols).ToList();
+                    await _teleMessage.SendMessage($"NEW TOKEN ADDED: {string.Join(",", newTokensAdded)}");
+                    await Task.Delay(1000);
+                    Environment.Exit(0);
+                }    
             }
         }
 
@@ -233,17 +250,32 @@ namespace Biden.Radar.Bybit
                 var shortPercent = (candle.High - candle.Open) / candle.Open * 100;
                 var longElastic = longPercent == 0 ? 0 : (longPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / longPercent * 100;
                 var shortElastic = shortPercent == 0 ? 0 : (shortPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / shortPercent * 100;
-                if (candle.Volume > 15000 && longPercent < -0.8M && longElastic >= 50)
+                if (candle.Volume > 15000 && longPercent < -0.8M && longElastic >= 40)
                 {
                     var teleMessage = $"💥 {symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     Console.WriteLine(teleMessage);
                     await _teleMessage.SendMessage(teleMessage);
                 }
-                if (candle.Volume > 15000 && shortPercent > 0.8M && shortElastic >= 50)
+                if (candle.Volume > 15000 && shortPercent > 0.8M && shortElastic >= 40)
                 {
                     var teleMessage = $"💥 {symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     Console.WriteLine(teleMessage);
                     await _teleMessage.SendMessage(teleMessage);
+                }
+            }
+
+            var currentTime = DateTime.Now;
+            if ((currentTime - _startTimePerp).TotalMinutes >= 2)
+            {
+                _startTimePerp = currentTime;
+                //5p get symbols again to check new listings
+                var currentSymbols = await GetPerpTradingSymbols();
+                if (currentSymbols.Count != _perpSymbols.Count)
+                {
+                    var newTokensAdded = currentSymbols.Select(x=>x.Name).Except(_perpSymbols).ToList();
+                    await _teleMessage.SendMessage($"NEW TOKEN ADDED: {string.Join(",", newTokensAdded)}");
+                    await Task.Delay(1000);
+                    Environment.Exit(0);
                 }
             }
         }

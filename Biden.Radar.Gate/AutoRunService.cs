@@ -75,6 +75,8 @@ namespace Biden.Radar.Gate
         private static ConcurrentDictionary<string, Candle> _candles = new ConcurrentDictionary<string, Candle>();
         private static ConcurrentDictionary<string, long> _candle1s = new ConcurrentDictionary<string, long>();
         private static ConcurrentDictionary<string, Candle> _perpCandles = new ConcurrentDictionary<string, Candle>();
+        private DateTime _startTimeSpot = DateTime.Now;
+        private static List<string> _spotSymbols = new List<string>();
 
 
         private async Task RunRadar()
@@ -82,11 +84,11 @@ namespace Biden.Radar.Gate
             var spotSymbols = await GetSpotTradingSymbols();
             var marginSymbols = await GetMarginTradingSymbols();
             var perpSymbols = await GetPerpTradingSymbols();
-            var spotSymbolNames = spotSymbols.Select(s => s.Symbol).ToList();
+            _spotSymbols = spotSymbols.Select(s => s.Symbol).ToList();
             var marginSymbolNames = marginSymbols.Select(s => s.Symbol).ToList();
             var perpSymbolNames = perpSymbols.Select(s => s.Contract).ToList();
 
-            var spotBatches = spotSymbolNames.Select((x, i) => new { Index = i, Value = x })
+            var spotBatches = _spotSymbols.Select((x, i) => new { Index = i, Value = x })
                               .GroupBy(x => x.Index / 100)
                               .Select(x => x.Select(v => v.Value).ToList())
                               .ToList();
@@ -96,12 +98,7 @@ namespace Biden.Radar.Gate
                               .ToList();
             
             var socketClient = new GateIoSocketClient();
-            //var tickerSubscriptionResult = await socketClient.SpotApi.SubscribeToTradeUpdatesAsync("ETH_USDT", data =>
-            //{
-            //    Console.WriteLine(data.Timestamp);
-            //    Console.WriteLine($"Amount: {data.Data.Quantity}, Price: {data.Data.Price}");
-            //});
-
+            
             long preTimestamp = 0;
             _candle1s.Clear();
             _candles.Clear();
@@ -234,6 +231,21 @@ namespace Biden.Radar.Gate
                 {
                     var teleMessage = $"✅ {symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     await _teleMessage.SendMessage(teleMessage);
+                }
+            }
+
+            var currentTime = DateTime.Now;
+            if ((currentTime - _startTimeSpot).TotalMinutes >= 2)
+            {
+                _startTimeSpot = currentTime;
+                //5p get symbols again to check new listings
+                var currentSymbols = await GetSpotTradingSymbols();
+                if (currentSymbols.Count != _spotSymbols.Count)
+                {
+                    var newTokensAdded = currentSymbols.Select(x => x.Symbol).Except(_spotSymbols).ToList();
+                    await _teleMessage.SendMessage($"NEW TOKEN ADDED: {string.Join(",", newTokensAdded)}");
+                    await Task.Delay(1000);
+                    Environment.Exit(0);
                 }
             }
         }
