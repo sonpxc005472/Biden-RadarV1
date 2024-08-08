@@ -220,7 +220,7 @@ namespace Biden.Radar.Bybit
                 }
             }
             var currentTime = DateTime.Now;
-            if((currentTime -  _startTimeSpot).TotalMinutes >= 2)
+            if((currentTime -  _startTimeSpot).TotalMinutes >= 5)
             {
                 _startTimeSpot = currentTime;
                 //5p get symbols again to check new listings
@@ -228,9 +228,13 @@ namespace Biden.Radar.Bybit
                 if(currentSymbols.Count != _spotSymbols.Count)
                 {
                     var newTokensAdded = currentSymbols.Select(x => x.Name).Except(_spotSymbols).ToList();
-                    await _teleMessage.SendMessage($"NEW TOKEN ADDED: {string.Join(",", newTokensAdded)}");
-                    await Task.Delay(1000);
-                    Environment.Exit(0);
+                    if (newTokensAdded.Any())
+                    {
+
+                        await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED SPOT/MARGIN: {string.Join(",", newTokensAdded)}");
+                        await Task.Delay(1000);
+                        Environment.Exit(0);
+                    }
                 }    
             }
         }
@@ -265,7 +269,7 @@ namespace Biden.Radar.Bybit
             }
 
             var currentTime = DateTime.Now;
-            if ((currentTime - _startTimePerp).TotalMinutes >= 2)
+            if ((currentTime - _startTimePerp).TotalMinutes >= 5)
             {
                 _startTimePerp = currentTime;
                 //5p get symbols again to check new listings
@@ -273,9 +277,12 @@ namespace Biden.Radar.Bybit
                 if (currentSymbols.Count != _perpSymbols.Count)
                 {
                     var newTokensAdded = currentSymbols.Select(x=>x.Name).Except(_perpSymbols).ToList();
-                    await _teleMessage.SendMessage($"NEW TOKEN ADDED: {string.Join(",", newTokensAdded)}");
-                    await Task.Delay(1000);
-                    Environment.Exit(0);
+                    if (newTokensAdded.Any())
+                    {
+                        await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED FOR FURTURE: {string.Join(",", newTokensAdded)}");
+                        await Task.Delay(1000);
+                        Environment.Exit(0);
+                    }                    
                 }
             }
         }

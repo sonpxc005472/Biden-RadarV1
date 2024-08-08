@@ -62,7 +62,7 @@ namespace Biden.Radar.OKX
                         if (!_tradingSymbols.Any(x => x.InstrumentType == OkxInstrumentType.Spot && x.InstrumentId == data.InstrumentId))
                         {
                             _tradingSymbols.Add(data);
-                            await _teleMessage.SendMessage($"NEW TOKEN ADDED FOR SPOT: {data.InstrumentId}");
+                            await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED FOR SPOT: {data.InstrumentId}");
                             await SubscribeSymbol(data.InstrumentId);
                         }
                     }
@@ -78,7 +78,7 @@ namespace Biden.Radar.OKX
                         if (!_tradingSymbols.Any(x => x.InstrumentType == OkxInstrumentType.Margin && x.InstrumentId == data.InstrumentId))
                         {
                             _tradingSymbols.Add(data);
-                            await _teleMessage.SendMessage($"NEW TOKEN ADDED FOR MARGIN: {data.InstrumentId}");
+                            await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED FOR MARGIN: {data.InstrumentId}");
                             await SubscribeSymbol(data.InstrumentId);
                         }
                     }
@@ -94,7 +94,7 @@ namespace Biden.Radar.OKX
                         if (!_tradingSymbols.Any(x => x.InstrumentType == OkxInstrumentType.Swap && x.InstrumentId == data.InstrumentId))
                         {
                             _tradingSymbols.Add(data);
-                            await _teleMessage.SendMessage($"NEW TOKEN ADDED FOR SWAP: {data.InstrumentId}");
+                            await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED FOR SWAP: {data.InstrumentId}");
                             await SubscribeSymbol(data.InstrumentId);
                         }
                     }

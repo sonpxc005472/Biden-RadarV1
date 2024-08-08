@@ -241,7 +241,7 @@ namespace Biden.Radar.Gate
             }
 
             var currentTime = DateTime.Now;
-            if ((currentTime - _startTimeSpot).TotalSeconds >= 2)
+            if ((currentTime - _startTimeSpot).TotalMinutes >= 5)
             {
                 _startTimeSpot = currentTime;
                 //5p get symbols again to check new listings
@@ -251,8 +251,9 @@ namespace Biden.Radar.Gate
                     var newTokensAdded = currentSymbols.Select(x => x.Symbol).Except(_spotSymbols).ToList();
                     if(newTokensAdded.Any())
                     {
+                        _spotSymbols = currentSymbols.Select(x => x.Symbol).ToList();
                         _marginSymbols = (await GetMarginTradingSymbols()).Select(s => s.Symbol).ToList();
-                        await _teleMessage.SendMessage($"NEW TOKEN ADDED: {string.Join(",", newTokensAdded)}");
+                        await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED: {string.Join(",", newTokensAdded)}");
                         await SubscribeSymbols(newTokensAdded);
                     }
                 }
