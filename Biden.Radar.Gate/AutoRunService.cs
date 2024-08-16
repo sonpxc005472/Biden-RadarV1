@@ -107,57 +107,6 @@ namespace Biden.Radar.Gate
             {
                 await SubscribeSymbols(symbols);
             }
-
-            //_perpCandles.Clear();
-            //foreach (var contract in perpSymbolNames)
-            //{
-            //    var subResult = await socketClient.PerpetualFuturesApi.SubscribeToTradeUpdatesAsync("", contract, async tradeData =>
-            //    {
-            //        if (tradeData != null)
-            //        {
-            //            var data = tradeData.Data.First();
-            //            var symbol = data.Contract;
-            //            var symbolType = CandleType.Perp;
-
-            //            long converttimestamp = (long)(tradeData.Timestamp.ToUniversalTime() - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
-            //            var timestamp = converttimestamp / 1000;
-            //            var tick = new TickData
-            //            {
-            //                Timestamp = converttimestamp,
-            //                Price = data.Price,
-            //                Amount = data.Price * data.Quantity
-            //            };
-            //            _candles.AddOrUpdate(symbol,
-            //                    (ts) => new Candle // Tạo nến mới nếu chưa có
-            //                    {
-            //                        Open = tick.Price,
-            //                        High = tick.Price,
-            //                        Low = tick.Price,
-            //                        Close = tick.Price,
-            //                        Volume = tick.Amount,
-            //                        CandleType = symbolType
-            //                    },
-            //                    (ts, existingCandle) => // Cập nhật nến hiện tại
-            //                    {
-            //                        existingCandle.High = Math.Max(existingCandle.High, tick.Price);
-            //                        existingCandle.Low = Math.Min(existingCandle.Low, tick.Price);
-            //                        existingCandle.Close = tick.Price;
-            //                        existingCandle.Volume += tick.Amount;
-            //                        existingCandle.CandleType = symbolType;
-            //                        return existingCandle;
-            //                    });
-            //            if (preTimestamp == 0)
-            //            {
-            //                preTimestamp = timestamp;
-            //            }
-            //            else if (timestamp > preTimestamp)
-            //            {
-            //                preTimestamp = timestamp;
-            //                await ProcessPerpBufferedData();
-            //            }
-            //        }
-            //    });
-            //}
         }
 
         private async Task SubscribeSymbols(List<string> symbols)
@@ -256,34 +205,6 @@ namespace Biden.Radar.Gate
                         await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED: {string.Join(",", newTokensAdded)}");
                         await SubscribeSymbols(newTokensAdded);
                     }
-                }
-            }
-        }
-
-        private async Task ProcessPerpBufferedData()
-        {
-            // Copy the current buffer for processing and clear the original buffer
-            var dataToProcess = new ConcurrentDictionary<string, Candle>(_perpCandles);
-            _perpCandles.Clear();
-
-            foreach (var kvp in dataToProcess)
-            {
-                var symbol = kvp.Key;
-                var candle = kvp.Value;
-
-                var longPercent = (candle.Low - candle.Open) / candle.Open * 100;
-                var shortPercent = (candle.High - candle.Open) / candle.Open * 100;
-                var longElastic = longPercent == 0 ? 0 : (longPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / longPercent * 100;
-                var shortElastic = shortPercent == 0 ? 0 : (shortPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / shortPercent * 100;
-                if (longPercent < -1.2M && longElastic >= 40)
-                {
-                    var teleMessage = $"💥 {symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
-                    await _teleMessage.SendMessage(teleMessage);
-                }
-                if (shortPercent > 1.2M && shortElastic >= 40)
-                {
-                    var teleMessage = $"💥 {symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
-                    await _teleMessage.SendMessage(teleMessage);
                 }
             }
         }
