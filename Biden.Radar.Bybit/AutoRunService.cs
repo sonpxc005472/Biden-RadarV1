@@ -77,7 +77,7 @@ namespace Biden.Radar.Bybit
             _spotCandles.Clear();
             foreach (var symbols in batches)
             {
-                var subResult = await socketClient.V5SpotApi.SubscribeToTradeUpdatesAsync(symbols, async data =>
+                _ = socketClient.V5SpotApi.SubscribeToTradeUpdatesAsync(symbols, async data =>
                 {
                     if (data != null)
                     {
@@ -138,7 +138,7 @@ namespace Biden.Radar.Bybit
                               .ToList();
             foreach (var symbols in batches)
             {
-                var subResult = await socketClient.V5LinearApi.SubscribeToTradeUpdatesAsync(symbols, async data =>
+                _ = socketClient.V5LinearApi.SubscribeToTradeUpdatesAsync(symbols, async data =>
                 {
                     if (data != null)
                     {
@@ -230,7 +230,6 @@ namespace Biden.Radar.Bybit
                     var newTokensAdded = currentSymbols.Select(x => x.Name).Except(_spotSymbols).ToList();
                     if (newTokensAdded.Any())
                     {
-
                         await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED SPOT/MARGIN: {string.Join(",", newTokensAdded)}");
                         await Task.Delay(1000);
                         Environment.Exit(0);

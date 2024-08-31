@@ -9,8 +9,8 @@ namespace Biden.Radar.OKX
 {
     public class AutoRunService : BackgroundService
     {
-        private readonly ITeleMessage _teleMessage;        
-        
+        private readonly ITeleMessage _teleMessage;
+
         public AutoRunService(ITeleMessage teleMessage)
         {
             _teleMessage = teleMessage;
@@ -50,10 +50,10 @@ namespace Biden.Radar.OKX
             var totalsymbols = _tradingSymbols.Select(c => c.InstrumentId).Distinct().ToList();
             foreach (var symbol in totalsymbols)
             {
-                await SubscribeSymbol(symbol);
+                SubscribeSymbol(symbol);
             }
 
-            await _websocketApiClient.Public.SubscribeToInstrumentsAsync(async data =>
+            _ = _websocketApiClient.Public.SubscribeToInstrumentsAsync(async data =>
             {
                 if (data != null)
                 {
@@ -63,13 +63,13 @@ namespace Biden.Radar.OKX
                         {
                             _tradingSymbols.Add(data);
                             await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED FOR SPOT: {data.InstrumentId}");
-                            await SubscribeSymbol(data.InstrumentId);
+                            SubscribeSymbol(data.InstrumentId);
                         }
                     }
                 }
             }, OkxInstrumentType.Spot);
 
-            await _websocketApiClient.Public.SubscribeToInstrumentsAsync(async data =>
+            _ = _websocketApiClient.Public.SubscribeToInstrumentsAsync(async data =>
             {
                 if (data != null)
                 {
@@ -79,13 +79,13 @@ namespace Biden.Radar.OKX
                         {
                             _tradingSymbols.Add(data);
                             await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED FOR MARGIN: {data.InstrumentId}");
-                            await SubscribeSymbol(data.InstrumentId);
+                            SubscribeSymbol(data.InstrumentId);
                         }
                     }
                 }
             }, OkxInstrumentType.Margin);
 
-            await _websocketApiClient.Public.SubscribeToInstrumentsAsync(async data =>
+            _ = _websocketApiClient.Public.SubscribeToInstrumentsAsync(async data =>
             {
                 if (data != null)
                 {
@@ -95,23 +95,20 @@ namespace Biden.Radar.OKX
                         {
                             _tradingSymbols.Add(data);
                             await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED FOR SWAP: {data.InstrumentId}");
-                            await SubscribeSymbol(data.InstrumentId);
+                            SubscribeSymbol(data.InstrumentId);
                         }
                     }
                 }
             }, OkxInstrumentType.Swap);
         }
 
-        private async Task SubscribeSymbol(string symbol)
+        private void SubscribeSymbol(string symbol)
         {
-            var subResult = await _websocketApiClient.Public.SubscribeToCandlesticksAsync(tradeData =>
+            _ = _websocketApiClient.Public.SubscribeToCandlesticksAsync(async tradeData =>
             {
                 if (tradeData != null)
                 {
                     var symbol = tradeData.InstrumentId;
-                    long converttimestamp = (long)(tradeData.Time.ToUniversalTime() - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
-                    var timestamp = tradeData.Timestamp / 1000;
-                    //Console.WriteLine($"Time: {timestamp}, Confirm: {tradeData.Confirm}");
 
                     if (tradeData.Confirm)
                     {
@@ -129,12 +126,12 @@ namespace Biden.Radar.OKX
                         if (tradeData.QuoteVolume > filterVol && longPercent < -filterTP && longElastic >= 40)
                         {
                             var teleMessage = (isPerp ? "💥 " : isMargin ? "✅ " : "") + $"{symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${tradeData.QuoteVolume.FormatNumber()}";
-                            _teleMessage.SendMessage(teleMessage);
+                            await _teleMessage.SendMessage(teleMessage);
                         }
                         if (tradeData.QuoteVolume > filterVol && shortPercent > filterTP && shortElastic >= 40 && (isPerp || isMargin))
                         {
                             var teleMessage = (isPerp ? "💥 " : isMargin ? "✅ " : "") + $"{symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${tradeData.QuoteVolume.FormatNumber()}";
-                            _teleMessage.SendMessage(teleMessage);
+                            await _teleMessage.SendMessage(teleMessage);
                         }
                     }
 

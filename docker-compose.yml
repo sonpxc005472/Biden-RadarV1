@@ -29,6 +29,15 @@ services:
       dockerfile: Biden.Radar.Gate/Dockerfile
     networks:
       - bidenradar
+  
+  radar-binance:
+    image: ${REGISTRY:-bidenradar}/binance:${TAG:-latest}
+    container_name: radar-binance
+    build:
+      context: .
+      dockerfile: Biden.Radar.Binance/Dockerfile
+    networks:
+      - bidenradar
             
 networks:
   bidenradar:

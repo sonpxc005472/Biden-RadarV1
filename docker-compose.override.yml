@@ -16,3 +16,8 @@ services:
    restart: unless-stopped
    environment:
      - ASPNETCORE_ENVIRONMENT=Development
+  
+  radar-binance:
+   restart: unless-stopped
+   environment:
+     - ASPNETCORE_ENVIRONMENT=Development
