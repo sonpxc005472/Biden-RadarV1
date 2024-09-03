@@ -123,12 +123,12 @@ namespace Biden.Radar.OKX
                         var filterVol = isPerp ? 20000 : isMargin ? 3000 : 500;
                         var filterTP = isPerp ? 1 : isMargin ? 0.5M : 1.2M;
 
-                        if (tradeData.QuoteVolume > filterVol && longPercent < -filterTP && longElastic >= 40)
+                        if (tradeData.QuoteVolume > filterVol && longPercent < -filterTP && longElastic >= 30)
                         {
                             var teleMessage = (isPerp ? "💥 " : isMargin ? "✅ " : "") + $"{symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${tradeData.QuoteVolume.FormatNumber()}";
                             await _teleMessage.SendMessage(teleMessage);
                         }
-                        if (tradeData.QuoteVolume > filterVol && shortPercent > filterTP && shortElastic >= 40 && (isPerp || isMargin))
+                        if (tradeData.QuoteVolume > filterVol && shortPercent > filterTP && shortElastic >= 30 && (isPerp || isMargin))
                         {
                             var teleMessage = (isPerp ? "💥 " : isMargin ? "✅ " : "") + $"{symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${tradeData.QuoteVolume.FormatNumber()}";
                             await _teleMessage.SendMessage(teleMessage);
