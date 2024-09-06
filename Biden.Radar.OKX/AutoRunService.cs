@@ -36,8 +36,9 @@ namespace Biden.Radar.OKX
                 var symbolInfos = spotSymbols.Concat(marginSymbols).Concat(swapSymbols);
                 return symbolInfos.ToList();
             }
-            catch
+            catch(Exception ex)
             {
+                Console.WriteLine(ex.ToString());
                 return new List<OkxInstrument>();
             }
         }
