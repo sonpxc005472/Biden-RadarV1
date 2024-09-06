@@ -206,13 +206,13 @@ namespace Biden.Radar.Bybit
                 var longElastic = longPercent == 0 ? 0 : (longPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / longPercent * 100;
                 var shortElastic = shortPercent == 0 ? 0 : (shortPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / shortPercent * 100;
                 var filterVol = candle.CandleType == CandleType.Margin ? 5000 : 1000;
-                if (candle.Volume > filterVol && longPercent < -0.5M && longElastic >= 40)
+                if (candle.Volume > filterVol && longPercent < -0.5M && longElastic >= 30)
                 {                    
                     var teleMessage = (candle.CandleType == CandleType.Margin ? "✅ " : "") + $"{symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     Console.WriteLine(teleMessage);
                     await _teleMessage.SendMessage(teleMessage);
                 }
-                if (candle.Volume > filterVol && shortPercent > 0.5M && shortElastic >= 40 && candle.CandleType == CandleType.Margin)
+                if (candle.Volume > filterVol && shortPercent > 0.5M && shortElastic >= 30 && candle.CandleType == CandleType.Margin)
                 {
                     var teleMessage = $"✅ {symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     Console.WriteLine(teleMessage);
@@ -253,13 +253,13 @@ namespace Biden.Radar.Bybit
                 var shortPercent = (candle.High - candle.Open) / candle.Open * 100;
                 var longElastic = longPercent == 0 ? 0 : (longPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / longPercent * 100;
                 var shortElastic = shortPercent == 0 ? 0 : (shortPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / shortPercent * 100;
-                if (candle.Volume > 15000 && longPercent < -0.8M && longElastic >= 40)
+                if (candle.Volume > 15000 && longPercent < -0.8M && longElastic >= 20)
                 {
                     var teleMessage = $"💥 {symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     Console.WriteLine(teleMessage);
                     await _teleMessage.SendMessage(teleMessage);
                 }
-                if (candle.Volume > 15000 && shortPercent > 0.8M && shortElastic >= 40)
+                if (candle.Volume > 15000 && shortPercent > 0.8M && shortElastic >= 20)
                 {
                     var teleMessage = $"💥 {symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     Console.WriteLine(teleMessage);

@@ -213,13 +213,13 @@ namespace Biden.Radar.Binance
                 var shortPercent = (candle.High - candle.Open) / candle.Open * 100;
                 var longElastic = longPercent == 0 ? 0 : (longPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / longPercent * 100;
                 var shortElastic = shortPercent == 0 ? 0 : (shortPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / shortPercent * 100;
-                if (candle.Volume > 15000 && longPercent < -1 && longElastic >= 30)
+                if (candle.Volume > 15000 && longPercent < -1 && longElastic >= 20)
                 {
                     var teleMessage = $"💥 {symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     Console.WriteLine(teleMessage);
                     await _teleMessage.SendMessage(teleMessage);
                 }
-                if (candle.Volume > 15000 && shortPercent > 1 && shortElastic >= 30)
+                if (candle.Volume > 15000 && shortPercent > 1 && shortElastic >= 20)
                 {
                     var teleMessage = $"💥 {symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     Console.WriteLine(teleMessage);
