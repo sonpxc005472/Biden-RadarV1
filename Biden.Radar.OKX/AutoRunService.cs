@@ -48,6 +48,7 @@ namespace Biden.Radar.OKX
         {
             _tradingSymbols = await GetTradingSymbols();
             var totalsymbols = _tradingSymbols.Select(c => c.InstrumentId).Distinct().ToList();
+            Console.WriteLine($"Total symbol to scan: {totalsymbols.Count}");
             foreach (var symbol in totalsymbols)
             {
                 SubscribeSymbol(symbol);
@@ -120,15 +121,15 @@ namespace Biden.Radar.OKX
                         var isPerp = instruments.Any(r => r.InstrumentType == OkxInstrumentType.Swap);
                         var isMargin = instruments.Any(r => r.InstrumentType == OkxInstrumentType.Margin);
 
-                        var filterVol = isPerp ? 20000 : isMargin ? 3000 : 500;
-                        var filterTP = isPerp ? 1 : isMargin ? 0.5M : 1.2M;
+                        var filterVol = isPerp ? 10000 : isMargin ? 3000 : 500;
+                        var filterTP = isPerp ? 0.8M : isMargin ? 0.5M : 1M;
 
-                        if (tradeData.QuoteVolume > filterVol && longPercent < -filterTP && longElastic >= 30)
+                        if (tradeData.QuoteVolume > filterVol && longPercent < -filterTP && longElastic >= 20)
                         {
                             var teleMessage = (isPerp ? "💥 " : isMargin ? "✅ " : "") + $"{symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${tradeData.QuoteVolume.FormatNumber()}";
                             await _teleMessage.SendMessage(teleMessage);
                         }
-                        if (tradeData.QuoteVolume > filterVol && shortPercent > filterTP && shortElastic >= 30 && (isPerp || isMargin))
+                        if (tradeData.QuoteVolume > filterVol && shortPercent > filterTP && shortElastic >= 20 && (isPerp || isMargin))
                         {
                             var teleMessage = (isPerp ? "💥 " : isMargin ? "✅ " : "") + $"{symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${tradeData.QuoteVolume.FormatNumber()}";
                             await _teleMessage.SendMessage(teleMessage);
