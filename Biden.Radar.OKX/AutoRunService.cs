@@ -142,9 +142,19 @@ namespace Biden.Radar.OKX
                         }
                     }
                     var symbolType = isPerp ? CandleType.Perp : (isMargin ? CandleType.Margin : CandleType.Spot);
-                    
-                    var timestamp = tradeData.Timestamp / 2000;
-                    
+
+                    long converttimestamp = (long)(tradeData.Time.ToUniversalTime() - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
+
+                    var timestamp = converttimestamp / 2000;
+                    if (preTimestamp == 0)
+                    {
+                        preTimestamp = timestamp;
+                    }
+                    else if (timestamp > preTimestamp)
+                    {
+                        preTimestamp = timestamp;
+                        await ProcessBufferedData();
+                    }
                     _tradeCandles.AddOrUpdate(symbol,
                             (ts) => new Candle // Tạo nến mới nếu chưa có
                             {
@@ -164,15 +174,7 @@ namespace Biden.Radar.OKX
                                 existingCandle.CandleType = symbolType;
                                 return existingCandle;
                             });
-                    if (preTimestamp == 0)
-                    {
-                        preTimestamp = timestamp;
-                    }
-                    else if (timestamp >= preTimestamp)
-                    {
-                        preTimestamp = timestamp;
-                        await ProcessBufferedData();
-                    }
+                    
                 }
             }, symbol, OkxPeriod.OneSecond);
         }
