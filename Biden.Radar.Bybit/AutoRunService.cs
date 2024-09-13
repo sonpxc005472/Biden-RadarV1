@@ -1,4 +1,5 @@
-﻿using Biden.Radar.Common.Telegrams;
+﻿using Biden.Radar.Common;
+using Biden.Radar.Common.Telegrams;
 using Bybit.Net.Clients;
 using Bybit.Net.Enums;
 using Bybit.Net.Objects.Models.V5;
@@ -299,30 +300,5 @@ namespace Biden.Radar.Bybit
         public string p { get; set; }
         public string v { get; set; }
         public string s { get; set; }
-    }
-
-    public class TickData
-    {
-        public long Timestamp { get; set; }
-        public decimal Price { get; set; }
-        public decimal Amount { get; set; }
-    }
-
-    public class Candle
-    {
-        public decimal Open { get; set; }
-        public decimal High { get; set; }
-        public decimal Low { get; set; }
-        public decimal Close { get; set; }
-        public decimal Volume { get; set; }
-        public bool Confirmed { get; set; }
-        public CandleType CandleType { get; set; }
-    }
-
-    public enum CandleType
-    {
-        Spot = 0,
-        Margin = 1,
-        Perp = 2
-    }
+    }    
 }

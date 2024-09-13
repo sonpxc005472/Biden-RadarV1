@@ -1,9 +1,11 @@
-﻿using Biden.Radar.Common.Telegrams;
+﻿using Biden.Radar.Common;
+using Biden.Radar.Common.Telegrams;
 using Microsoft.Extensions.Hosting;
 using OKX.Api;
 using OKX.Api.Common.Enums;
 using OKX.Api.Public.Enums;
 using OKX.Api.Public.Models;
+using System.Collections.Concurrent;
 
 namespace Biden.Radar.OKX
 {
@@ -45,6 +47,8 @@ namespace Biden.Radar.OKX
 
         private static List<OkxInstrument> _tradingSymbols = new List<OkxInstrument>();
         private static OKXWebSocketApiClient _websocketApiClient = new OKXWebSocketApiClient();
+        private static ConcurrentDictionary<string, Candle> _tradeCandles = new ConcurrentDictionary<string, Candle>();
+
         private async Task RunRadar()
         {
             _tradingSymbols = await GetTradingSymbols();
@@ -104,6 +108,8 @@ namespace Biden.Radar.OKX
             }, OkxInstrumentType.Swap);
         }
 
+        long preTimestamp = 0;
+
         private void SubscribeSymbol(string symbol)
         {
             _ = _websocketApiClient.Public.SubscribeToCandlesticksAsync(async tradeData =>
@@ -111,17 +117,16 @@ namespace Biden.Radar.OKX
                 if (tradeData != null)
                 {
                     var symbol = tradeData.InstrumentId;
-
+                    var instruments = _tradingSymbols.Where(r => r.InstrumentId == symbol);
+                    var isPerp = instruments.Any(r => r.InstrumentType == OkxInstrumentType.Swap);
+                    var isMargin = instruments.Any(r => r.InstrumentType == OkxInstrumentType.Margin);
                     if (tradeData.Confirm)
                     {
                         var longPercent = (tradeData.Low - tradeData.Open) / tradeData.Open * 100;
                         var shortPercent = (tradeData.High - tradeData.Open) / tradeData.Open * 100;
                         var longElastic = longPercent == 0 ? 0 : (longPercent - ((tradeData.Close - tradeData.Open) / tradeData.Open * 100)) / longPercent * 100;
                         var shortElastic = shortPercent == 0 ? 0 : (shortPercent - ((tradeData.Close - tradeData.Open) / tradeData.Open * 100)) / shortPercent * 100;
-                        var instruments = _tradingSymbols.Where(r => r.InstrumentId == symbol);
-                        var isPerp = instruments.Any(r => r.InstrumentType == OkxInstrumentType.Swap);
-                        var isMargin = instruments.Any(r => r.InstrumentType == OkxInstrumentType.Margin);
-
+                        
                         var filterVol = isPerp ? 10000 : isMargin ? 3000 : 500;
                         var filterTP = isPerp ? 0.8M : isMargin ? 0.5M : 1M;
 
@@ -136,9 +141,72 @@ namespace Biden.Radar.OKX
                             await _teleMessage.SendMessage(teleMessage);
                         }
                     }
-
+                    var symbolType = isPerp ? CandleType.Perp : (isMargin ? CandleType.Margin : CandleType.Spot);
+                    
+                    var timestamp = tradeData.Timestamp / 2000;
+                    
+                    _tradeCandles.AddOrUpdate(symbol,
+                            (ts) => new Candle // Tạo nến mới nếu chưa có
+                            {
+                                Open = tradeData.Open,
+                                High = tradeData.High,
+                                Low = tradeData.Low,
+                                Close = tradeData.Close,
+                                Volume = tradeData.QuoteVolume,
+                                CandleType = symbolType
+                            },
+                            (ts, existingCandle) => // Cập nhật nến hiện tại
+                            {
+                                existingCandle.High = Math.Max(existingCandle.High, tradeData.High);
+                                existingCandle.Low = Math.Min(existingCandle.Low, tradeData.Low);
+                                existingCandle.Close = tradeData.Close;
+                                existingCandle.Volume += tradeData.QuoteVolume;
+                                existingCandle.CandleType = symbolType;
+                                return existingCandle;
+                            });
+                    if (preTimestamp == 0)
+                    {
+                        preTimestamp = timestamp;
+                    }
+                    else if (timestamp >= preTimestamp)
+                    {
+                        preTimestamp = timestamp;
+                        await ProcessBufferedData();
+                    }
                 }
             }, symbol, OkxPeriod.OneSecond);
         }
+
+        private async Task ProcessBufferedData()
+        {
+            // Copy the current buffer for processing and clear the original buffer
+            var dataToProcess = new ConcurrentDictionary<string, Candle>(_tradeCandles);
+            _tradeCandles.Clear();
+
+            foreach (var kvp in dataToProcess)
+            {
+                var symbol = kvp.Key;
+                var candle = kvp.Value;
+
+                var longPercent = (candle.Low - candle.Open) / candle.Open * 100;
+                var shortPercent = (candle.High - candle.Open) / candle.Open * 100;
+                var longElastic = longPercent == 0 ? 0 : (longPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / longPercent * 100;
+                var shortElastic = shortPercent == 0 ? 0 : (shortPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / shortPercent * 100;
+                var filterVol = candle.CandleType == CandleType.Perp ? 40000 : candle.CandleType == CandleType.Margin ? 8000 : 800;
+                var filterTP = candle.CandleType == CandleType.Perp ? 0.8M : candle.CandleType == CandleType.Margin ? 0.5M : 1M;
+
+                if (candle.Volume > filterVol && longPercent < -filterTP && longElastic >= 30)
+                {
+                    var teleMessage = (candle.CandleType == CandleType.Perp ? "💥 " : candle.CandleType == CandleType.Margin ? "✅ " : "") + $"{symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
+                    await _teleMessage.SendMessage(teleMessage);
+                }
+                if (candle.Volume > filterVol && shortPercent > filterTP && shortElastic >= 30 && (candle.CandleType != CandleType.Spot))
+                {
+                    var teleMessage = (candle.CandleType == CandleType.Perp ? "💥 " : candle.CandleType == CandleType.Margin ? "✅ " : "") + $"{symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
+                    await _teleMessage.SendMessage(teleMessage);
+                }
+            }            
+        }
+
     }
 }
