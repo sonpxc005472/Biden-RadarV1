@@ -125,15 +125,26 @@ namespace Biden.Radar.OKX
                         
                         var filterVol = isPerp ? 10000 : isMargin ? 3000 : 500;
                         var filterTP = isPerp ? 0.8M : isMargin ? 0.5M : 1M;
-
+                        var vipVol = isPerp ? 600000 : isMargin ? 80000 : 20000;
+                        var vipElastic = isPerp ? 50 : isMargin ? 70 : 80;
                         if (tradeData.QuoteVolume > filterVol && longPercent < -filterTP && longElastic >= 20)
                         {
+                            var isVip = tradeData.QuoteVolume >= vipVol && longElastic >= vipElastic;
                             var teleMessage = (isPerp ? "💥 " : isMargin ? "✅ " : "") + $"{symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${tradeData.QuoteVolume.FormatNumber()}";
+                            if(isVip)
+                            {
+                                teleMessage = $"<span style=\"color: blue\">{teleMessage}</span>";
+                            }    
                             await _teleMessage.SendMessage(teleMessage);
                         }
                         if (tradeData.QuoteVolume > filterVol && shortPercent > filterTP && shortElastic >= 20 && (isPerp || isMargin))
                         {
+                            var isVip = tradeData.QuoteVolume >= vipVol && shortElastic >= vipElastic;
                             var teleMessage = (isPerp ? "💥 " : isMargin ? "✅ " : "") + $"{symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${tradeData.QuoteVolume.FormatNumber()}";
+                            if (isVip)
+                            {
+                                teleMessage = $"<span style=\"color: blue\">{teleMessage}</span>";
+                            }
                             await _teleMessage.SendMessage(teleMessage);
                         }
                     }
