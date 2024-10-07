@@ -133,7 +133,7 @@ namespace Biden.Radar.OKX
                             var teleMessage = (isPerp ? "💥 " : isMargin ? "✅ " : "") + $"{symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${tradeData.QuoteVolume.FormatNumber()}";
                             if(isVip)
                             {
-                                teleMessage = $"<span style=\"color: blue\">{teleMessage}</span>";
+                                teleMessage = $"🥇 {teleMessage}";
                             }    
                             await _teleMessage.SendMessage(teleMessage);
                         }
@@ -143,7 +143,7 @@ namespace Biden.Radar.OKX
                             var teleMessage = (isPerp ? "💥 " : isMargin ? "✅ " : "") + $"{symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${tradeData.QuoteVolume.FormatNumber()}";
                             if (isVip)
                             {
-                                teleMessage = $"<span style=\"color: blue\">{teleMessage}</span>";
+                                teleMessage = $"🥇 {teleMessage}";
                             }
                             await _teleMessage.SendMessage(teleMessage);
                         }
