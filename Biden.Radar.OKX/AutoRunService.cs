@@ -132,20 +132,20 @@ namespace Biden.Radar.OKX
                         var filterTP = isPerp ? 0.8M : isMargin ? 0.5M : 1M;
                         var vipVol = isPerp ? 600000 : isMargin ? 80000 : 20000;
                         var vipElastic = isPerp ? 50 : isMargin ? 70 : 80;
-                        if (tradeData.QuoteVolume > filterVol && longPercent < -filterTP && longElastic >= 20)
+                        if (tradeData.TradingVolume > filterVol && longPercent < -filterTP && longElastic >= 20)
                         {
-                            var isVip = tradeData.QuoteVolume >= vipVol && longElastic >= vipElastic;
-                            var teleMessage = (isPerp ? "💥 " : isMargin ? "✅ " : "") + $"{symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${tradeData.QuoteVolume.FormatNumber()}";
+                            var isVip = tradeData.TradingVolume >= vipVol && longElastic >= vipElastic;
+                            var teleMessage = (isPerp ? "💥 " : isMargin ? "✅ " : "") + $"{symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${tradeData.TradingVolume.FormatNumber()}";
                             if(isVip)
                             {
                                 teleMessage = $"🥇 {teleMessage}";
                             }    
                             await _teleMessage.SendMessage(teleMessage);
                         }
-                        if (tradeData.QuoteVolume > filterVol && shortPercent > filterTP && shortElastic >= 20 && (isPerp || isMargin))
+                        if (tradeData.TradingVolume > filterVol && shortPercent > filterTP && shortElastic >= 20 && (isPerp || isMargin))
                         {
-                            var isVip = tradeData.QuoteVolume >= vipVol && shortElastic >= vipElastic;
-                            var teleMessage = (isPerp ? "💥 " : isMargin ? "✅ " : "") + $"{symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${tradeData.QuoteVolume.FormatNumber()}";
+                            var isVip = tradeData.TradingVolume >= vipVol && shortElastic >= vipElastic;
+                            var teleMessage = (isPerp ? "💥 " : isMargin ? "✅ " : "") + $"{symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${tradeData.TradingVolume.FormatNumber()}";
                             if (isVip)
                             {
                                 teleMessage = $"🥇 {teleMessage}";
