@@ -20,8 +20,14 @@ namespace Biden.Radar.Binance
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             Console.WriteLine("Running...");
-
+            // Set the timer to trigger after 5 days
+            TimeSpan delay = TimeSpan.FromDays(5);
+            Timer timer = new Timer(ExecuteJob, null, delay, Timeout.InfiniteTimeSpan);
             await RunRadar();
+        }
+        private void ExecuteJob(object? state)
+        {
+            Environment.Exit(0);
         }
 
         public async Task<List<BinanceSymbol>> GetSpotTradingSymbols()

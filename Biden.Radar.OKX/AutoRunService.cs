@@ -1,9 +1,8 @@
 ﻿using Biden.Radar.Common.Telegrams;
 using Microsoft.Extensions.Hosting;
 using OKX.Api;
-using OKX.Api.Common.Enums;
-using OKX.Api.Public.Enums;
-using OKX.Api.Public.Models;
+using OKX.Api.Common;
+using OKX.Api.Public;
 
 namespace Biden.Radar.OKX
 {
@@ -18,11 +17,17 @@ namespace Biden.Radar.OKX
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             Console.WriteLine("Running...");
-
+            // Set the timer to trigger after 5 days
+            TimeSpan delay = TimeSpan.FromDays(5);
+            Timer timer = new Timer(ExecuteJob, null, delay, Timeout.InfiniteTimeSpan);
             await RunRadar();
         }
+        private void ExecuteJob(object? state)
+        {
+            Environment.Exit(0);
+        }
 
-        public async Task<List<OkxInstrument>> GetTradingSymbols()
+        public async Task<List<OkxPublicInstrument>> GetTradingSymbols()
         {
             try
             {
@@ -39,11 +44,11 @@ namespace Biden.Radar.OKX
             catch(Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-                return new List<OkxInstrument>();
+                return new List<OkxPublicInstrument>();
             }
         }
 
-        private static List<OkxInstrument> _tradingSymbols = new List<OkxInstrument>();
+        private static List<OkxPublicInstrument> _tradingSymbols = new List<OkxPublicInstrument>();
         private static OKXWebSocketApiClient _websocketApiClient = new OKXWebSocketApiClient();
 
         private async Task RunRadar()
