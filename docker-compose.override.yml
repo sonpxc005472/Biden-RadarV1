@@ -10,10 +10,10 @@ services:
    environment:
      - ASPNETCORE_ENVIRONMENT=Development
      
-  radar-gate:
-   restart: unless-stopped
-   environment:
-     - ASPNETCORE_ENVIRONMENT=Development
+  # radar-gate:
+   # restart: unless-stopped
+   # environment:
+     # - ASPNETCORE_ENVIRONMENT=Development
   
   radar-binance:
    restart: unless-stopped

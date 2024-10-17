@@ -19,14 +19,14 @@ services:
     networks:
       - bidenradar
       
-  radar-gate:
-    image: ${REGISTRY:-bidenradar}/gate:${TAG:-latest}
-    container_name: radar-gate
-    build:
-      context: .
-      dockerfile: Biden.Radar.Gate/Dockerfile
-    networks:
-      - bidenradar
+  # radar-gate:
+    # image: ${REGISTRY:-bidenradar}/gate:${TAG:-latest}
+    # container_name: radar-gate
+    # build:
+      # context: .
+      # dockerfile: Biden.Radar.Gate/Dockerfile
+    # networks:
+      # - bidenradar
   
   radar-binance:
     image: ${REGISTRY:-bidenradar}/binance:${TAG:-latest}
