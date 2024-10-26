@@ -20,11 +20,35 @@ namespace Biden.Radar.OKX
             // Set the timer to trigger after 5 days
             TimeSpan delay = TimeSpan.FromDays(5);
             Timer timer = new Timer(ExecuteJob, null, delay, Timeout.InfiniteTimeSpan);
+            var symbolCheck = new System.Timers.Timer(TimeSpan.FromMinutes(5).TotalMilliseconds);
+            symbolCheck.Elapsed += (source, e) =>
+            {
+                ExecuteCheckingJob();
+            };
+            symbolCheck.AutoReset = true;
+            symbolCheck.Enabled = true;
             await RunRadar();
         }
         private void ExecuteJob(object? state)
         {
             Environment.Exit(0);
+        }
+
+        private async void ExecuteCheckingJob()
+        {
+            var currentSymbols = await GetTradingSymbols();
+
+            if (currentSymbols.Count != _tradingSymbols.Count)
+            {
+                var oldSymbols = _tradingSymbols.Select(x => x.InstrumentId).ToList();
+                var newTokensAdded = currentSymbols.Where(x => !oldSymbols.Any(o => o == x.InstrumentId)).Select(x=>x.InstrumentId).ToList();
+                if (newTokensAdded.Any())
+                {
+                    await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED: {string.Join(",", newTokensAdded)}");
+                    await Task.Delay(1000);
+                }
+                Environment.Exit(0);
+            }
         }
 
         public async Task<List<OkxPublicInstrument>> GetTradingSymbols()
@@ -60,54 +84,6 @@ namespace Biden.Radar.OKX
             {
                 SubscribeSymbol(symbol);
             }
-
-            _ = _websocketApiClient.Public.SubscribeToInstrumentsAsync(async data =>
-            {
-                if (data != null)
-                {
-                    if (data.QuoteCurrency == "USDT" && data.State == OkxInstrumentState.Live)
-                    {
-                        if (!_tradingSymbols.Any(x => x.InstrumentType == OkxInstrumentType.Spot && x.InstrumentId == data.InstrumentId))
-                        {
-                            _tradingSymbols.Add(data);
-                            await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED FOR SPOT: {data.InstrumentId}");
-                            SubscribeSymbol(data.InstrumentId);
-                        }
-                    }
-                }
-            }, OkxInstrumentType.Spot);
-
-            _ = _websocketApiClient.Public.SubscribeToInstrumentsAsync(async data =>
-            {
-                if (data != null)
-                {
-                    if (data.QuoteCurrency == "USDT" && data.State == OkxInstrumentState.Live)
-                    {
-                        if (!_tradingSymbols.Any(x => x.InstrumentType == OkxInstrumentType.Margin && x.InstrumentId == data.InstrumentId))
-                        {
-                            _tradingSymbols.Add(data);
-                            await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED FOR MARGIN: {data.InstrumentId}");
-                            SubscribeSymbol(data.InstrumentId);
-                        }
-                    }
-                }
-            }, OkxInstrumentType.Margin);
-
-            _ = _websocketApiClient.Public.SubscribeToInstrumentsAsync(async data =>
-            {
-                if (data != null)
-                {
-                    if (data.SettlementCurrency == "USDT" && data.State == OkxInstrumentState.Live)
-                    {
-                        if (!_tradingSymbols.Any(x => x.InstrumentType == OkxInstrumentType.Swap && x.InstrumentId == data.InstrumentId))
-                        {
-                            _tradingSymbols.Add(data);
-                            await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED FOR SWAP: {data.InstrumentId}");
-                            SubscribeSymbol(data.InstrumentId);
-                        }
-                    }
-                }
-            }, OkxInstrumentType.Swap);
         }
 
 

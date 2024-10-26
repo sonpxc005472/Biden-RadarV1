@@ -248,9 +248,9 @@ namespace Biden.Radar.Bybit
                     if (newTokensAdded.Any())
                     {
                         await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED SPOT/MARGIN: {string.Join(",", newTokensAdded)}");
-                        await Task.Delay(1000);
-                        Environment.Exit(0);
+                        await Task.Delay(1000);                       
                     }
+                    Environment.Exit(0);
                 }    
             }
         }
