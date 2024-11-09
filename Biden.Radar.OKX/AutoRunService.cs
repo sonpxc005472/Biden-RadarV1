@@ -17,22 +17,18 @@ namespace Biden.Radar.OKX
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             Console.WriteLine("Running...");
-            // Set the timer to trigger after 5 days
-            TimeSpan delay = TimeSpan.FromDays(5);
-            Timer timer = new Timer(ExecuteJob, null, delay, Timeout.InfiniteTimeSpan);
-            var symbolCheck = new System.Timers.Timer(TimeSpan.FromMinutes(5).TotalMilliseconds);
+            // Set the timer to trigger after 5 mins
+            TimeSpan delay = TimeSpan.FromMinutes(5);
+            var symbolCheck = new System.Timers.Timer(delay.TotalMilliseconds);
             symbolCheck.Elapsed += (source, e) =>
-            {
+            {                
                 ExecuteCheckingJob();
             };
+            await RunRadar();
+            await Task.Delay(30000);
             symbolCheck.AutoReset = true;
             symbolCheck.Enabled = true;
-            await RunRadar();
-        }
-        private void ExecuteJob(object? state)
-        {
-            Environment.Exit(0);
-        }
+        }        
 
         private async void ExecuteCheckingJob()
         {
@@ -46,8 +42,8 @@ namespace Biden.Radar.OKX
                 {
                     await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED: {string.Join(",", newTokensAdded)}");
                     await Task.Delay(1000);
+                    Environment.Exit(0);
                 }
-                Environment.Exit(0);
             }
         }
 
@@ -68,7 +64,7 @@ namespace Biden.Radar.OKX
             catch(Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-                return new List<OkxPublicInstrument>();
+                throw;
             }
         }
 
