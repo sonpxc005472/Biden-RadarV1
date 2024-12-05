@@ -212,25 +212,25 @@ namespace Biden.Radar.Bybit
                 var shortPercent = (candle.High - candle.Open) / candle.Open * 100;
                 var longElastic = longPercent == 0 ? 0 : (longPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / longPercent * 100;
                 var shortElastic = shortPercent == 0 ? 0 : (shortPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / shortPercent * 100;
-                var filterVol = candle.CandleType == CandleType.Margin ? 5000 : 1000;
-                if (candle.Volume > filterVol && longPercent < -0.5M && longElastic >= 30)
+                var filterVol = candle.CandleType == CandleType.Margin ? 10000 : 5000;
+                if (candle.Volume > filterVol && longPercent < -0.3M && longElastic >= 30)
                 {
                     var isVip = candle.Volume >= 50000 && longElastic >= 80;
-                    var teleMessage = (candle.CandleType == CandleType.Margin ? "✅ " : "") + $"{symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
+                    var teleMessage = (candle.CandleType == CandleType.Margin ? "✅ " : "") + $"🔵 {symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     if (isVip)
                     {
-                        teleMessage = $"🥇 {teleMessage}";
+                        teleMessage = $"🥇 {teleMessage} #vip";
                     }
                     Console.WriteLine(teleMessage);
                     await _teleMessage.SendMessage(teleMessage);
                 }
-                if (candle.Volume > filterVol && shortPercent > 0.5M && shortElastic >= 30 && candle.CandleType == CandleType.Margin)
+                if (candle.Volume > filterVol && shortPercent > 0.3M && shortElastic >= 30 && candle.CandleType == CandleType.Margin)
                 {
                     var isVip = candle.Volume >= 50000 && shortElastic >= 80;
-                    var teleMessage = $"✅ {symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
+                    var teleMessage = $"✅ 🔴 {symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     if (isVip)
                     {
-                        teleMessage = $"🥇 {teleMessage}";
+                        teleMessage = $"🥇 {teleMessage} #vip";
                     }
                     Console.WriteLine(teleMessage);
                     await _teleMessage.SendMessage(teleMessage);
