@@ -107,7 +107,7 @@ namespace Biden.Radar.OKX
                         if (tradeData.TradingVolume > filterVol && longPercent < -filterTP && longElastic >= 10)
                         {
                             var isVip = tradeData.TradingVolume >= vipVol && longElastic >= vipElastic;
-                            var teleMessage = (isPerp ? "💥 " : isMargin ? "✅ " : "") + $"🔵 {symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${tradeData.TradingVolume.FormatNumber()}";
+                            var teleMessage = (isPerp ? "💥🔻 " : isMargin ? "✅🔻 " : "") + $"{symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${tradeData.TradingVolume.FormatNumber()}";
                             if(isVip)
                             {
                                 teleMessage = $"🥇 {teleMessage} #vip";
@@ -117,7 +117,7 @@ namespace Biden.Radar.OKX
                         if (tradeData.TradingVolume > filterVol && shortPercent > filterTP && shortElastic >= 10 && (isPerp || isMargin))
                         {
                             var isVip = tradeData.TradingVolume >= vipVol && shortElastic >= vipElastic;
-                            var teleMessage = (isPerp ? "💥 " : isMargin ? "✅ " : "") + $"🔴 {symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${tradeData.TradingVolume.FormatNumber()}";
+                            var teleMessage = (isPerp ? "💥🔺 " : isMargin ? "✅🔺 " : "") + $"{symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${tradeData.TradingVolume.FormatNumber()}";
                             if (isVip)
                             {
                                 teleMessage = $"🥇 {teleMessage} #vip";
