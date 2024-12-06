@@ -101,10 +101,10 @@ namespace Biden.Radar.OKX
                         var shortElastic = shortPercent == 0 ? 0 : (shortPercent - ((tradeData.Close - tradeData.Open) / tradeData.Open * 100)) / shortPercent * 100;
                         
                         var filterVol = isPerp ? 20000 : isMargin ? 5000 : 800;
-                        var filterTP = isPerp ? 0.8M : isMargin ? 0.4M : 1M;
+                        var filterTP = isPerp ? 0.8M : isMargin ? 0.3M : 1M;
                         var vipVol = isPerp ? 600000 : isMargin ? 80000 : 20000;
                         var vipElastic = isPerp ? 50 : isMargin ? 70 : 80;
-                        if (tradeData.TradingVolume > filterVol && longPercent < -filterTP && longElastic >= 10)
+                        if (tradeData.TradingVolume > filterVol && longPercent < -filterTP && longElastic >= 20)
                         {
                             var isVip = tradeData.TradingVolume >= vipVol && longElastic >= vipElastic;
                             var teleMessage = (isPerp ? "💥🔻 " : isMargin ? "✅🔻 " : "") + $"{symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${tradeData.TradingVolume.FormatNumber()}";
@@ -114,7 +114,7 @@ namespace Biden.Radar.OKX
                             }    
                             await _teleMessage.SendMessage(teleMessage);
                         }
-                        if (tradeData.TradingVolume > filterVol && shortPercent > filterTP && shortElastic >= 10 && (isPerp || isMargin))
+                        if (tradeData.TradingVolume > filterVol && shortPercent > filterTP && shortElastic >= 20 && (isPerp || isMargin))
                         {
                             var isVip = tradeData.TradingVolume >= vipVol && shortElastic >= vipElastic;
                             var teleMessage = (isPerp ? "💥🔺 " : isMargin ? "✅🔺 " : "") + $"{symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${tradeData.TradingVolume.FormatNumber()}";
