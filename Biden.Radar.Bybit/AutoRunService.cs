@@ -215,22 +215,22 @@ namespace Biden.Radar.Bybit
                 var filterVol = candle.CandleType == CandleType.Margin ? 5000 : 50000;
                 if (candle.Volume > filterVol && longPercent < -0.3M && longElastic >= 30)
                 {
-                    var isVip = candle.Volume >= 50000 && longElastic >= 80;
+                    var isVip = candle.Volume >= 50000 && longElastic >= 70;
                     var teleMessage = (candle.CandleType == CandleType.Margin ? "✅🔻 " : "") + $"{symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     if (isVip)
                     {
-                        teleMessage = $"🥇 {teleMessage} #vip";
+                        teleMessage = $"#vip {teleMessage}";
                     }
                     Console.WriteLine(teleMessage);
                     await _teleMessage.SendMessage(teleMessage);
                 }
                 if (candle.Volume > filterVol && shortPercent > 0.3M && shortElastic >= 30 && candle.CandleType == CandleType.Margin)
                 {
-                    var isVip = candle.Volume >= 50000 && shortElastic >= 80;
+                    var isVip = candle.Volume >= 50000 && shortElastic >= 70;
                     var teleMessage = $"✅🔺 {symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     if (isVip)
                     {
-                        teleMessage = $"🥇 {teleMessage} #vip";
+                        teleMessage = $"#vip {teleMessage}";
                     }
                     Console.WriteLine(teleMessage);
                     await _teleMessage.SendMessage(teleMessage);
