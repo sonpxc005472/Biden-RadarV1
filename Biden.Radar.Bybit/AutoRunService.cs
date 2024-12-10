@@ -270,7 +270,7 @@ namespace Biden.Radar.Bybit
                 var shortPercent = (candle.High - candle.Open) / candle.Open * 100;
                 var longElastic = longPercent == 0 ? 0 : (longPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / longPercent * 100;
                 var shortElastic = shortPercent == 0 ? 0 : (shortPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / shortPercent * 100;
-                if (candle.Volume > 90000 && longPercent < -0.8M && longElastic >= 30)
+                if (candle.Volume > 40000 && longPercent < -0.8M && longElastic >= 25)
                 {
                     var isVip = candle.Volume >= 100000 && longElastic >= 60;
                     var teleMessage = $"💥🔻 {symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
@@ -281,7 +281,7 @@ namespace Biden.Radar.Bybit
                     Console.WriteLine(teleMessage);
                     await _teleMessage.SendMessage(teleMessage);
                 }
-                if (candle.Volume > 90000 && shortPercent > 0.8M && shortElastic >= 30)
+                if (candle.Volume > 40000 && shortPercent > 0.8M && shortElastic >= 25)
                 {
                     var isVip = candle.Volume >= 100000 && shortElastic >= 60;
                     var teleMessage = $"💥🔺 {symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
