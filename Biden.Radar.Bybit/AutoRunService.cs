@@ -29,50 +29,17 @@ namespace Biden.Radar.Bybit
             Environment.Exit(0);
         }
 
-        public async Task<List<BybitSpotSymbol>> GetSpotTradingSymbols()
-        {
-            try
-            {
-                var publicApi = new BybitRestClient();
-                var spotSymbolsData = await publicApi.V5Api.ExchangeData.GetSpotSymbolsAsync();
-                var spotSymbols = spotSymbolsData.Data.List.Where(s => s.QuoteAsset == "USDT").ToList();
-                return spotSymbols;
-            }
-            catch
-            {
-                return new List<BybitSpotSymbol>();
-            }
-        }
+        private static ConcurrentDictionary<string, Candle> _spotCandles = new();
+        private static ConcurrentDictionary<string, Candle> _perpCandles = new();
 
-
-        public async Task<List<BybitLinearInverseSymbol>> GetPerpTradingSymbols()
-        {
-            try
-            {
-                var publicApi = new BybitRestClient();                
-                var swapSymbolsData = await publicApi.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Linear);
-                var swapSymbols = swapSymbolsData.Data.List.Where(s => s.SettleAsset == "USDT").ToList();
-                return swapSymbols;
-            }
-            catch
-            {
-                return new List<BybitLinearInverseSymbol>();
-            }
-        }
-
-        private static ConcurrentDictionary<string, Candle> _spotCandles = new ConcurrentDictionary<string, Candle>();
-        private static ConcurrentDictionary<string, Candle> _perpCandles = new ConcurrentDictionary<string, Candle>();
-
-        private DateTime _startTimeSpot = DateTime.Now;
-        private DateTime _startTimePerp = DateTime.Now;
-        private static List<string> _spotSymbols = new List<string>();
-        private static List<string> _perpSymbols = new List<string>();
+        private static List<string> _spotSymbols = new();
+        private static List<string> _perpSymbols = new();
         private async Task RunRadar()
         {
-            var spotSymbols = await GetSpotTradingSymbols();
-            var perpSymbols = await GetPerpTradingSymbols();
-            _spotSymbols = spotSymbols.Select(s => s.Name).ToList();
-            _perpSymbols = perpSymbols.Select(s => s.Name).ToList();
+            SharedObjects.SpotSymbols = await SharedObjects.GetSpotTradingSymbols();
+            SharedObjects.PerpSymbols = await SharedObjects.GetPerpTradingSymbols();
+            _spotSymbols = SharedObjects.SpotSymbols.Select(s => s.Name).ToList();
+            _perpSymbols = SharedObjects.PerpSymbols.Select(s => s.Name).ToList();
             
             var batches = _spotSymbols.Select((x, i) => new { Index = i, Value = x })
                               .GroupBy(x => x.Index / 10)
@@ -84,7 +51,7 @@ namespace Biden.Radar.Bybit
             _spotCandles.Clear();
             foreach (var symbols in batches)
             {
-                _ = socketClient.V5SpotApi.SubscribeToTradeUpdatesAsync(symbols, async data =>
+                _ = SharedObjects.WebsocketApiClient.V5SpotApi.SubscribeToTradeUpdatesAsync(symbols, async data =>
                 {
                     if (data != null)
                     {
@@ -93,7 +60,7 @@ namespace Biden.Radar.Bybit
                         {
                             var symbol = tradeData.Symbol;
                             var symbolType = CandleType.Spot;
-                            var symbolInfo = spotSymbols.FirstOrDefault(x => x.Name == symbol);
+                            var symbolInfo = SharedObjects.SpotSymbols.FirstOrDefault(x => x.Name == symbol);
                             if (symbolInfo != null && (symbolInfo.MarginTrading == MarginTrading.Both || symbolInfo.MarginTrading == MarginTrading.UtaOnly))
                             {
                                 symbolType = CandleType.Margin;
@@ -145,7 +112,7 @@ namespace Biden.Radar.Bybit
                               .ToList();
             foreach (var symbols in batches)
             {
-                _ = socketClient.V5LinearApi.SubscribeToTradeUpdatesAsync(symbols, async data =>
+                _ = SharedObjects.WebsocketApiClient.V5LinearApi.SubscribeToTradeUpdatesAsync(symbols, async data =>
                 {
                     if (data != null)
                     {
@@ -216,7 +183,7 @@ namespace Biden.Radar.Bybit
                 if (candle.Volume > filterVol && longPercent < -0.3M && longElastic >= 30)
                 {
                     var isVip = candle.Volume >= 50000 && longElastic >= 70 && (candle.CandleType == CandleType.Margin || longPercent <= -2);
-                    var teleMessage = (candle.CandleType == CandleType.Margin ? "✅🔻 " : "") + $"{symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
+                    var teleMessage = (candle.CandleType == CandleType.Margin ? "✅🔻 " : "") + $"{symbol}: {Math.Round(longPercent, 2)}%, E: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     if (isVip)
                     {
                         teleMessage = $"#vip {teleMessage}";
@@ -227,7 +194,7 @@ namespace Biden.Radar.Bybit
                 if (candle.Volume > filterVol && shortPercent > 0.3M && shortElastic >= 30 && candle.CandleType == CandleType.Margin)
                 {
                     var isVip = candle.Volume >= 50000 && shortElastic >= 70 && (candle.CandleType == CandleType.Margin || shortPercent >= 2);
-                    var teleMessage = $"✅🔺 {symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
+                    var teleMessage = $"✅🔺 {symbol}: {Math.Round(shortPercent, 2)}%, E: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     if (isVip)
                     {
                         teleMessage = $"#vip {teleMessage}";
@@ -235,23 +202,6 @@ namespace Biden.Radar.Bybit
                     Console.WriteLine(teleMessage);
                     await _teleMessage.SendMessage(teleMessage);
                 }
-            }
-            var currentTime = DateTime.Now;
-            if((currentTime -  _startTimeSpot).TotalMinutes >= 5)
-            {
-                _startTimeSpot = currentTime;
-                //5p get symbols again to check new listings
-                var currentSymbols = await GetSpotTradingSymbols();
-                if(currentSymbols.Count != _spotSymbols.Count)
-                {
-                    var newTokensAdded = currentSymbols.Select(x => x.Name).Except(_spotSymbols).ToList();
-                    if (newTokensAdded.Any())
-                    {
-                        await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED SPOT/MARGIN: {string.Join(",", newTokensAdded)}");
-                        await Task.Delay(1000);                       
-                    }
-                    Environment.Exit(0);
-                }    
             }
         }
 
@@ -273,7 +223,7 @@ namespace Biden.Radar.Bybit
                 if (candle.Volume > 40000 && longPercent < -0.8M && longElastic >= 25)
                 {
                     var isVip = candle.Volume >= 100000 && longElastic >= 50 && longPercent <= -1.5M;
-                    var teleMessage = $"💥🔻 {symbol}: {Math.Round(longPercent, 2)}%, TP: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
+                    var teleMessage = $"💥🔻 {symbol}: {Math.Round(longPercent, 2)}%, E: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     if (isVip)
                     {
                         teleMessage = $"#vip {teleMessage}";
@@ -284,31 +234,13 @@ namespace Biden.Radar.Bybit
                 if (candle.Volume > 40000 && shortPercent > 0.8M && shortElastic >= 25)
                 {
                     var isVip = candle.Volume >= 100000 && shortElastic >= 50 && shortPercent >= 1.5M;
-                    var teleMessage = $"💥🔺 {symbol}: {Math.Round(shortPercent, 2)}%, TP: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
+                    var teleMessage = $"💥🔺 {symbol}: {Math.Round(shortPercent, 2)}%, E: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     if (isVip)
                     {
                         teleMessage = $"#vip {teleMessage}";
                     }
                     Console.WriteLine(teleMessage);
                     await _teleMessage.SendMessage(teleMessage);
-                }
-            }
-
-            var currentTime = DateTime.Now;
-            if ((currentTime - _startTimePerp).TotalMinutes >= 5)
-            {
-                _startTimePerp = currentTime;
-                //5p get symbols again to check new listings
-                var currentSymbols = await GetPerpTradingSymbols();
-                if (currentSymbols.Count != _perpSymbols.Count)
-                {
-                    var newTokensAdded = currentSymbols.Select(x=>x.Name).Except(_perpSymbols).ToList();
-                    if (newTokensAdded.Any())
-                    {
-                        await _teleMessage.SendMessage($"👀 NEW TOKEN ADDED FOR FURTURE: {string.Join(",", newTokensAdded)}");
-                        await Task.Delay(1000);
-                        Environment.Exit(0);
-                    }                    
                 }
             }
         }

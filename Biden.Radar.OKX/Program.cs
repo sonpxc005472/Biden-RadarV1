@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Quartz;
 
 namespace Biden.Radar.OKX
 {
@@ -29,6 +30,18 @@ namespace Biden.Radar.OKX
                 
                 services.AddSingleton<ITeleMessage, TeleMessage>();
                 services.AddHostedService<AutoRunService>();
+                services.AddQuartz(q =>
+                {
+                    var jobKey = new JobKey("TokenChangesJob");
+                    q.AddJob<TokenChangesJob>(opts => opts.WithIdentity(jobKey));
+
+                    q.AddTrigger(opts => opts
+                        .ForJob(jobKey)
+                        .WithIdentity("TokenChangesJob-trigger")
+                        .WithCronSchedule("0 0/5 * * * ?"));
+
+                });
+                services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
             });
     }    
 }
