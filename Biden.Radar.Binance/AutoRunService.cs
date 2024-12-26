@@ -91,7 +91,6 @@ namespace Biden.Radar.Binance
                 });
             }
 
-            return;
             var batches = perpSymbolNames.Select((x, i) => new { Index = i, Value = x })
                               .GroupBy(x => x.Index / 50)
                               .Select(x => x.Select(v => v.Value).ToList())
@@ -163,7 +162,7 @@ namespace Biden.Radar.Binance
                 var shortPercent = (candle.High - candle.Open) / candle.Open * 100;
                 var longElastic = longPercent == 0 ? 0 : (longPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / longPercent * 100;
                 var shortElastic = shortPercent == 0 ? 0 : (shortPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / shortPercent * 100;
-                if (candle.Volume > 15000 && longPercent < -1 && longElastic >= 20)
+                if (candle.Volume > 15000 && longPercent < -1 && longElastic >= 25)
                 {
                     var isVip = candle.Volume >= 500000 && longElastic >= 60;
                     var teleMessage = $"💥 {symbol}: {Math.Round(longPercent, 2)}%, E: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
@@ -174,7 +173,7 @@ namespace Biden.Radar.Binance
                     Console.WriteLine(teleMessage);
                     await _teleMessage.SendMessage(teleMessage);
                 }
-                if (candle.Volume > 15000 && shortPercent > 1 && shortElastic >= 20)
+                if (candle.Volume > 15000 && shortPercent > 1 && shortElastic >= 25)
                 {
                     var isVip = candle.Volume >= 500000 && shortElastic >= 60;
                     var teleMessage = $"💥 {symbol}: {Math.Round(shortPercent, 2)}%, E: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
