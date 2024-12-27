@@ -60,9 +60,9 @@ namespace Biden.Radar.Binance
                             var instruments = SharedObjects.SpotSymbols.Where(r => r.Name == symbol);
                             var isMargin = instruments.Any(r => r.IsMarginTradingAllowed);
 
-                            var filterVol = isMargin ? 20000 : 10000;
-                            var filterTP = isMargin ? 0.3M : 1M;
-                            var vipVol = isMargin ? 100000 : 30000;
+                            var filterVol = isMargin ? 20000 : 5000;
+                            var filterTP = isMargin ? 0.3M : 0.8M;
+                            var vipVol = isMargin ? 60000 : 20000;
                             var vipElastic = isMargin ? 65 : 70;
                             
                             if (tradeData.QuoteVolume > filterVol && longPercent < -filterTP && longElastic >= 30)
