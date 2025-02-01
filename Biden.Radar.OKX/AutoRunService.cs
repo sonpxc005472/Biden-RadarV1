@@ -54,7 +54,7 @@ namespace Biden.Radar.OKX
                         if (tradeData.TradingVolume > filterVol && longPercent < -filterTP && longElastic >= 20)
                         {
                             var isVip = tradeData.TradingVolume >= vipVol && longElastic >= vipElastic;
-                            if (isPerp && longPercent < 0.7M && !isVip)
+                            if (isPerp && longPercent > -0.7M && !isVip)
                             {
                                 return;
                             }
