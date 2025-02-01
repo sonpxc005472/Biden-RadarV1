@@ -15,7 +15,7 @@ services:
    # environment:
      # - ASPNETCORE_ENVIRONMENT=Development
   
-  radar-binance:
+  radar-bybit-v3:
    restart: unless-stopped
    environment:
      - ASPNETCORE_ENVIRONMENT=Development

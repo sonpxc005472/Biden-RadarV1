@@ -28,12 +28,12 @@ services:
     # networks:
       # - bidenradar
   
-  radar-binance:
-    image: ${REGISTRY:-bidenradar}/binance:${TAG:-latest}
-    container_name: radar-binance
+  radar-bybit-v3:
+    image: ${REGISTRY:-bidenradar}/bybitv3:${TAG:-latest}
+    container_name: radar-bybit-v3
     build:
       context: .
-      dockerfile: Biden.Radar.Binance/Dockerfile
+      dockerfile: Biden.Radar.BybitV3/Dockerfile
     networks:
       - bidenradar
             

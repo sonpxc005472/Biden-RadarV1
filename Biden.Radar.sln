@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Biden.Radar.Gate", "Biden.R
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Biden.Radar.Binance", "Biden.Radar.Binance\Biden.Radar.Binance.csproj", "{97E05932-9144-42F9-80C7-85136C10B486}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Biden.Radar.BybitV3", "Biden.Radar.BybitV3\Biden.Radar.BybitV3.csproj", "{3EF80281-9871-4F6A-9DC5-E9ACC4779BBD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{97E05932-9144-42F9-80C7-85136C10B486}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{97E05932-9144-42F9-80C7-85136C10B486}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{97E05932-9144-42F9-80C7-85136C10B486}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3EF80281-9871-4F6A-9DC5-E9ACC4779BBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3EF80281-9871-4F6A-9DC5-E9ACC4779BBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3EF80281-9871-4F6A-9DC5-E9ACC4779BBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3EF80281-9871-4F6A-9DC5-E9ACC4779BBD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
