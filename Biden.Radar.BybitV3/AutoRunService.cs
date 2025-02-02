@@ -63,7 +63,7 @@ namespace Biden.Radar.BybitV3
                                 if (tradeData.Turnover > 40000 && longPercent < -1.2M && longElastic >= 25)
                                 {
                                     var isVip = tradeData.Turnover >= 100000 && longElastic >= 50 && longPercent <= -1.5M;
-                                    var teleMessage = $"(1m) 💥🔻 {symbol}: {Math.Round(longPercent, 2)}%, E: {Math.Round(longElastic, 2)}%, VOL: ${tradeData.Turnover.FormatNumber()}";
+                                    var teleMessage = $"(1m) 🔻 {symbol}: {Math.Round(longPercent, 2)}%, E: {Math.Round(longElastic, 2)}%, VOL: ${tradeData.Turnover.FormatNumber()}";
                                     if (isVip)
                                     {
                                         teleMessage = $"#vip {teleMessage}";
@@ -73,7 +73,7 @@ namespace Biden.Radar.BybitV3
                                 if (tradeData.Turnover > 40000 && shortPercent > 1.2M && shortElastic >= 25)
                                 {
                                     var isVip = tradeData.Turnover >= 100000 && shortElastic >= 50 && shortPercent >= 1.5M;
-                                    var teleMessage = $"(1m) 💥🔺 {symbol}: {Math.Round(shortPercent, 2)}%, E: {Math.Round(shortElastic, 2)}%, VOL: ${tradeData.Turnover.FormatNumber()}";
+                                    var teleMessage = $"(1m) 🔺 {symbol}: {Math.Round(shortPercent, 2)}%, E: {Math.Round(shortElastic, 2)}%, VOL: ${tradeData.Turnover.FormatNumber()}";
                                     if (isVip)
                                     {
                                         teleMessage = $"#vip {teleMessage}";
@@ -102,7 +102,7 @@ namespace Biden.Radar.BybitV3
                                 if (tradeData.Turnover > 100000 && longPercent < -2M && longElastic >= 25)
                                 {
                                     var isVip = tradeData.Turnover >= 200000 && longElastic >= 50 && longPercent <= -2.5M;
-                                    var teleMessage = $"(5m) 💥🔻 {symbol}: {Math.Round(longPercent, 2)}%, E: {Math.Round(longElastic, 2)}%, VOL: ${tradeData.Turnover.FormatNumber()}";
+                                    var teleMessage = $"(5m) 🔻 {symbol}: {Math.Round(longPercent, 2)}%, E: {Math.Round(longElastic, 2)}%, VOL: ${tradeData.Turnover.FormatNumber()}";
                                     if (isVip)
                                     {
                                         teleMessage = $"#vip {teleMessage}";
@@ -112,7 +112,7 @@ namespace Biden.Radar.BybitV3
                                 if (tradeData.Turnover > 100000 && shortPercent > 2M && shortElastic >= 25)
                                 {
                                     var isVip = tradeData.Turnover >= 200000 && shortElastic >= 50 && shortPercent >= 2.5M;
-                                    var teleMessage = $"(5m) 💥🔺 {symbol}: {Math.Round(shortPercent, 2)}%, E: {Math.Round(shortElastic, 2)}%, VOL: ${tradeData.Turnover.FormatNumber()}";
+                                    var teleMessage = $"(5m) 🔺 {symbol}: {Math.Round(shortPercent, 2)}%, E: {Math.Round(shortElastic, 2)}%, VOL: ${tradeData.Turnover.FormatNumber()}";
                                     if (isVip)
                                     {
                                         teleMessage = $"#vip {teleMessage}";
