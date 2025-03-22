@@ -1,6 +1,8 @@
-﻿using Biden.Radar.Common.Telegrams;
+﻿using System.Collections.Concurrent;
+using Biden.Radar.Common.Telegrams;
 using Microsoft.Extensions.Hosting;
 using OKX.Api.Common;
+using OKX.Api.Public;
 
 namespace Biden.Radar.OKX
 {
@@ -23,14 +25,14 @@ namespace Biden.Radar.OKX
             SharedObjects.TradingSymbols = await SharedObjects.GetTradingSymbols();
             var totalsymbols = SharedObjects.TradingSymbols.Select(c => c.InstrumentId).Distinct().ToList();
             Console.WriteLine($"Total symbol to scan: {totalsymbols.Count}");
-            foreach (var symbol in totalsymbols)
-            {
-                SubscribeSymbol(symbol);
-            }
+            SubscribeSymbol(totalsymbols);
+            //SubscribeOrderBook(totalsymbols);
         }
 
+        private static ConcurrentDictionary<decimal, decimal> bidOrders = new();
+        private static ConcurrentDictionary<decimal, decimal> askOrders = new();
 
-        private void SubscribeSymbol(string symbol)
+        private void SubscribeSymbol(List<string> symbols)
         {
             _ = SharedObjects.WebsocketApiClient.Public.SubscribeToCandlesticksAsync(async tradeData =>
             {
@@ -81,7 +83,33 @@ namespace Biden.Radar.OKX
                         }
                     }
                 }
-            }, symbol, OkxPeriod.OneSecond);
+            }, symbols, OkxPeriod.OneSecond);
+        }
+
+        private void SubscribeOrderBook(List<string> symbols)
+        {
+           var rss = SharedObjects.WebsocketApiClient.Public.SubscribeToOrderBookAsync(async data =>
+            {
+                var symbol = data.InstrumentId;
+                var asks = data.Asks;
+                var bids = data.Bids;
+                await AnalyzeOrderBook(symbol, asks, bids);
+            }, symbols, OkxOrderBookType.OrderBook);
+        }
+        
+        private async Task AnalyzeOrderBook(string symbol, List<OkxPublicOrderBookRow> orderBookAsk, List<OkxPublicOrderBookRow> orderBookBid)
+        {
+            decimal totalBidVolume = orderBookBid.Sum(x=>x.Quantity);
+            decimal totalAskVolume = orderBookAsk.Sum(x=>x.Quantity);
+
+            decimal imbalance = totalBidVolume - totalAskVolume;
+            decimal ocEstimate = Math.Abs(imbalance) / (totalBidVolume + totalAskVolume) * 100;
+            
+            if (ocEstimate > 50) // Ngưỡng có thể chỉnh
+            {
+                Console.WriteLine($"⚠️ Cảnh báo: {symbol} Có thể sắp có râu nến giật mạnh!");
+               // await _teleMessage.SendMessage($"⚠️ Cảnh báo: {symbol} Có thể sắp có râu nến giật mạnh!");
+            }
         }
     }
 }
