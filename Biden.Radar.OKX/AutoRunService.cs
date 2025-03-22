@@ -16,7 +16,7 @@ namespace Biden.Radar.OKX
         }
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            Console.WriteLine("Running...");
+            Console.WriteLine($"{DateTime.Now} - Running...");
             await RunRadar();
         }     
         
