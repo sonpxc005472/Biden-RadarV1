@@ -106,62 +106,62 @@ namespace Biden.Radar.Bybit
                 });
             }
 
-            // batches = _perpSymbols.Select((x, i) => new { Index = i, Value = x })
-            //                   .GroupBy(x => x.Index / 10)
-            //                   .Select(x => x.Select(v => v.Value).ToList())
-            //                   .ToList();
-            // foreach (var symbols in batches)
-            // {
-            //     _ = SharedObjects.WebsocketApiClient.V5LinearApi.SubscribeToTradeUpdatesAsync(symbols, async data =>
-            //     {
-            //         if (data != null)
-            //         {
-            //             var tradeDatas = data.Data;
-            //             foreach (var tradeData in tradeDatas)
-            //             {
-            //                 var symbol = tradeData.Symbol;
-            //                 var symbolType = CandleType.Perp;
-            //                 
-            //                 long converttimestamp = (long)(tradeData.Timestamp.ToUniversalTime() - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
-            //                 var timestamp = converttimestamp / 1000;
-            //                 var tick = new TickData
-            //                 {
-            //                     Timestamp = converttimestamp,
-            //                     Price = tradeData.Price,
-            //                     Amount = tradeData.Price * tradeData.Quantity
-            //                 };
-            //                 _perpCandles.AddOrUpdate(symbol,
-            //                         (ts) => new Candle // Tạo nến mới nếu chưa có
-            //                         {
-            //                             Open = tick.Price,
-            //                             High = tick.Price,
-            //                             Low = tick.Price,
-            //                             Close = tick.Price,
-            //                             Volume = tick.Amount,
-            //                             CandleType = symbolType
-            //                         },
-            //                         (ts, existingCandle) => // Cập nhật nến hiện tại
-            //                         {
-            //                             existingCandle.High = Math.Max(existingCandle.High, tick.Price);
-            //                             existingCandle.Low = Math.Min(existingCandle.Low, tick.Price);
-            //                             existingCandle.Close = tick.Price;
-            //                             existingCandle.Volume += tick.Amount;
-            //                             existingCandle.CandleType = symbolType;
-            //                             return existingCandle;
-            //                         });
-            //                 if (preTimestamp == 0)
-            //                 {
-            //                     preTimestamp = timestamp;
-            //                 }
-            //                 else if (timestamp > preTimestamp)
-            //                 {
-            //                     preTimestamp = timestamp;
-            //                     await ProcessPerpBufferedData();
-            //                 }
-            //             }
-            //         }
-            //     });
-            // }
+            var batchesPerp = _perpSymbols.Select((x, i) => new { Index = i, Value = x })
+                              .GroupBy(x => x.Index / 10)
+                              .Select(x => x.Select(v => v.Value).ToList())
+                              .ToList();
+            foreach (var symbols in batchesPerp)
+            {
+                _ = SharedObjects.WebsocketApiClient.V5LinearApi.SubscribeToTradeUpdatesAsync(symbols, async data =>
+                {
+                    if (data != null)
+                    {
+                        var tradeDatas = data.Data;
+                        foreach (var tradeData in tradeDatas)
+                        {
+                            var symbol = tradeData.Symbol;
+                            var symbolType = CandleType.Perp;
+                            
+                            long converttimestamp = (long)(tradeData.Timestamp.ToUniversalTime() - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
+                            var timestamp = converttimestamp / 1000;
+                            var tick = new TickData
+                            {
+                                Timestamp = converttimestamp,
+                                Price = tradeData.Price,
+                                Amount = tradeData.Price * tradeData.Quantity
+                            };
+                            _perpCandles.AddOrUpdate(symbol,
+                                    (ts) => new Candle // Tạo nến mới nếu chưa có
+                                    {
+                                        Open = tick.Price,
+                                        High = tick.Price,
+                                        Low = tick.Price,
+                                        Close = tick.Price,
+                                        Volume = tick.Amount,
+                                        CandleType = symbolType
+                                    },
+                                    (ts, existingCandle) => // Cập nhật nến hiện tại
+                                    {
+                                        existingCandle.High = Math.Max(existingCandle.High, tick.Price);
+                                        existingCandle.Low = Math.Min(existingCandle.Low, tick.Price);
+                                        existingCandle.Close = tick.Price;
+                                        existingCandle.Volume += tick.Amount;
+                                        existingCandle.CandleType = symbolType;
+                                        return existingCandle;
+                                    });
+                            if (preTimestamp == 0)
+                            {
+                                preTimestamp = timestamp;
+                            }
+                            else if (timestamp > preTimestamp)
+                            {
+                                preTimestamp = timestamp;
+                                await ProcessPerpBufferedData();
+                            }
+                        }
+                    }
+                });
+            }
         }
 
         private async Task ProcessSpotBufferedData()
@@ -220,9 +220,9 @@ namespace Biden.Radar.Bybit
                 var shortPercent = (candle.High - candle.Open) / candle.Open * 100;
                 var longElastic = longPercent == 0 ? 0 : (longPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / longPercent * 100;
                 var shortElastic = shortPercent == 0 ? 0 : (shortPercent - ((candle.Close - candle.Open) / candle.Open * 100)) / shortPercent * 100;
-                if (candle.Volume > 40000 && longPercent < -0.8M && longElastic >= 25)
+                if (candle.Volume >= 80000 && longPercent < -1.5M && longElastic >= 35)
                 {
-                    var isVip = candle.Volume >= 100000 && longElastic >= 50 && longPercent <= -1.5M;
+                    var isVip = candle.Volume >= 150000 && longElastic >= 50 && longPercent <= -1.8M;
                     var teleMessage = $"💥🔻 {symbol}: {Math.Round(longPercent, 2)}%, E: {Math.Round(longElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     if (isVip)
                     {
@@ -231,9 +231,9 @@ namespace Biden.Radar.Bybit
                     Console.WriteLine(teleMessage);
                     await _teleMessage.SendMessage(teleMessage);
                 }
-                if (candle.Volume > 40000 && shortPercent > 0.8M && shortElastic >= 25)
+                if (candle.Volume > 80000 && shortPercent > 1.5M && shortElastic >= 35)
                 {
-                    var isVip = candle.Volume >= 100000 && shortElastic >= 50 && shortPercent >= 1.5M;
+                    var isVip = candle.Volume >= 150000 && shortElastic >= 50 && shortPercent >= 1.8M;
                     var teleMessage = $"💥🔺 {symbol}: {Math.Round(shortPercent, 2)}%, E: {Math.Round(shortElastic, 2)}%, VOL: ${candle.Volume.FormatNumber()}";
                     if (isVip)
                     {
