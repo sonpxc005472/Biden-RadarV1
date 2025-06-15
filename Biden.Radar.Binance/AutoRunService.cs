@@ -98,7 +98,7 @@ namespace Biden.Radar.Binance
             
             foreach (var symbols in batches)
             {
-                _ = SharedObjects.WebsocketApiClient.UsdFuturesApi.SubscribeToTradeUpdatesAsync(symbols, async data =>
+                _ = SharedObjects.WebsocketApiClient.UsdFuturesApi.ExchangeData.SubscribeToTradeUpdatesAsync(symbols, async data =>
                 {
                     if (data != null)
                     {
