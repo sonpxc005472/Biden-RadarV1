@@ -19,14 +19,14 @@ services:
     networks:
       - bidenradar
   
-  radar-bybit-v3:
-    image: ${REGISTRY:-bidenradar}/bybitv3:${TAG:-latest}
-    container_name: radar-bybit-v3
-    build:
-      context: .
-      dockerfile: Biden.Radar.BybitV3/Dockerfile
-    networks:
-      - bidenradar
+  # radar-bybit-v3:
+  #   image: ${REGISTRY:-bidenradar}/bybitv3:${TAG:-latest}
+  #   container_name: radar-bybit-v3
+  #   build:
+  #     context: .
+  #     dockerfile: Biden.Radar.BybitV3/Dockerfile
+  #   networks:
+  #     - bidenradar
             
 networks:
   bidenradar:
