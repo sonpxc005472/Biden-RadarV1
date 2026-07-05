@@ -8,7 +8,7 @@ namespace Biden.Radar.OKX;
 public static class SharedObjects
 {
     public static List<OkxPublicInstrument> TradingSymbols = new();
-    public static OKXWebSocketApiClient WebsocketApiClient = new();
+    public static OkxWebSocketApiClient WebsocketApiClient = new();
     public static OkxRestApiClient RestClient = new();
     
     public static async Task<List<OkxPublicInstrument>> GetTradingSymbols()
